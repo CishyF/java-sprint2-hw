@@ -1,7 +1,7 @@
 public enum TransactionType {
     EXPENSE, PROFIT;
 
-    public boolean isExpense() {
+    boolean isExpense() {
         return this == EXPENSE;
     }
 }

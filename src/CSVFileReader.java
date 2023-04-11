@@ -2,7 +2,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class CSVFileReader {
@@ -11,19 +10,19 @@ public class CSVFileReader {
 
     private CSVFileReader() {}
 
-    public List<List<String>> readCSVFileByRows(String path) {
+    public List<String[]> readCSVFileByRowsAndColumns(String path) {
 
-        List<List<String>> separatedRows = new ArrayList<>();
+        List<String[]> splitRows = new ArrayList<>();
 
         try {
             List<String> rows = Files.readAllLines(Path.of(path));
 
-            rows.stream().map(r -> Arrays.asList(r.split(","))).forEach(separatedRows::add);
+            rows.stream().map(row -> row.split(",")).forEach(splitRows::add);
         } catch (IOException e) {
-            throw new RuntimeException("Проблема со считыванием!");
+            throw new RuntimeException("Проблема со считыванием данных из файла!");
         }
 
-        return separatedRows;
+        return splitRows;
     }
 
 
