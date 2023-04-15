@@ -1,91 +1,73 @@
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
-public class MonthlyReport {
+public class MonthlyReport implements Report {
 
     private final String monthName;
-    private final Map<TransactionType, List<String>> itemsNamesByTransactionType;
-    private final Map<String, Integer> itemQuantityByName;
-    private final Map<String, Integer> itemCostByName;
+    private final List<OperationRecord> operations;
 
-    public MonthlyReport(String monthName,
-                         Map<TransactionType, List<String>> itemsNamesByTransactionType,
-                         Map<String, Integer> itemsQuantityByName,
-                         Map<String, Integer> itemsCostsByName
-    ) {
+    public MonthlyReport(String monthName) {
         this.monthName = monthName;
-        this.itemsNamesByTransactionType = itemsNamesByTransactionType;
-        this.itemQuantityByName = itemsQuantityByName;
-        this.itemCostByName = itemsCostsByName;
+        this.operations = new ArrayList<>();
     }
 
     public String getMonthName() {
         return monthName;
     }
 
-    public List<String> getItemsNamesByTransactionType(TransactionType transaction) {
-        return itemsNamesByTransactionType.getOrDefault(transaction,
-                                                        Collections.emptyList());
+    public List<OperationRecord> getOperations() {
+        return operations;
     }
 
-    public int getItemQuantityByName(String name) {
-        return itemQuantityByName.getOrDefault(name, 0);
+    public void addNewOperation(String name, boolean isExpense, int quantity, int cost) {
+        Objects.requireNonNull(name);
+
+        OperationRecord operation = new OperationRecord(name, isExpense, quantity, cost);
+        operations.add(operation);
     }
 
-    public int getItemCostsByName(String name) {
-        return itemCostByName.getOrDefault(name, 0);
-    }
-
-    public int getTotalSumOfMonthOperation(TransactionType transaction) {
-        if (!itemsNamesByTransactionType.containsKey(transaction)) {
-            System.out.println("Такой операции не производилось в этом месяце");
-        }
-        return itemsNamesByTransactionType.get(transaction)
-                                          .stream()
-                                          .mapToInt(name -> itemQuantityByName.get(name) * itemCostByName.get(name))
-                                          .sum();
+    public int getTotalSumOfMonthOperation(boolean isExpense) {
+        return operations.stream()
+                         .mapToInt(o -> isExpense ? o.getExpenseSum() : o.getEarningSum())
+                         .sum();
     }
 
     public void printMostProfitableItem() {
-        if (!itemsNamesByTransactionType.containsKey(TransactionType.PROFIT)) {
-            System.out.println("- В этом месяце не было прибыльных товаров");
-            return;
+
+        if (operations.isEmpty()) {
+            System.out.println("- Нет доступных операций в этом месяце");
         }
-        Object[] objs = itemsNamesByTransactionType.get(TransactionType.PROFIT)
-                                                   .stream()
-                                                   .map(name -> {
-                                                       return new Object[]
-                                                        {name, itemQuantityByName.get(name) * itemCostByName.get(name)};
-                                                   })
-                                                   .max(Comparator.comparingInt(arr -> (Integer) arr[1]))
-                                                   .get();
+
+        OperationRecord mostProfitableItem =
+                operations.stream()
+                          .sorted(Comparator.comparingInt(OperationRecord::getEarningSum))
+                          .collect(Collectors.toCollection(LinkedList::new))
+                          .pollLast();
+
+
         System.out.printf("- Самый прибыльный товар за %s - это %s, доход от него составил %d\n",
                           monthName,
-                          objs[0],
-                          (Integer) objs[1]
+                          mostProfitableItem.getName(),
+                          mostProfitableItem.getEarningSum()
         );
     }
 
     public void printMostExpensiveWaste() {
-        if (!itemsNamesByTransactionType.containsKey(TransactionType.EXPENSE)) {
-            System.out.println("- В этом месяце не было трат");
-            return;
+
+        if (operations.isEmpty()) {
+            System.out.println("- Нет доступных операций в этом месяце");
         }
-        Object[] objs = itemsNamesByTransactionType.get(TransactionType.EXPENSE)
-                                                   .stream()
-                                                   .map(name -> {
-                                                       return new Object[]
-                                                        {name, itemQuantityByName.get(name) * itemCostByName.get(name)};
-                                                   })
-                                                   .max(Comparator.comparingInt(arr -> (Integer) arr[1]))
-                                                   .get();
+
+        OperationRecord mostExpensiveWaste =
+                operations.stream()
+                          .sorted(Comparator.comparingInt(OperationRecord::getExpenseSum))
+                          .collect(Collectors.toCollection(LinkedList::new))
+                          .pollLast();
 
         System.out.printf("- Самая большая трата за %s, которая составила %d, - это %s\n",
                 monthName,
-                (Integer) objs[1],
-                objs[0]
+                mostExpensiveWaste.getExpenseSum(),
+                mostExpensiveWaste.getName()
         );
     }
 
@@ -100,9 +82,7 @@ public class MonthlyReport {
     public String toString() {
         return "MonthlyReport{" +
                 "monthName='" + monthName + '\'' +
-                ", itemsNamesByTransactionType=" + itemsNamesByTransactionType +
-                ", itemQuantityByName=" + itemQuantityByName +
-                ", itemCostByName=" + itemCostByName +
+                ", operations=" + operations +
                 '}';
     }
 }
