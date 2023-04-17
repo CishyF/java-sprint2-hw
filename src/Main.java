@@ -1,20 +1,13 @@
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
 
 public class Main {
 
     private static final Scanner in = new Scanner(System.in);
-
-    private static final String MONTHLY_REPORT_PATH_TEMPLATE = "resources/m.2021%02d.csv";
-    private static final String YEARLY_REPORT_PATH = "resources/y.2021.csv";
     private static final String SEPARATOR = "-".repeat(30);
-
 
     public static void main(String[] args) {
 
-        List<MonthlyReport> monthlyReports = null;
-        YearlyReport yearlyReport = null;
+        ReportEngine reportEngine = new ReportEngine();
 
         while (true) {
             printMenu();
@@ -26,55 +19,19 @@ public class Main {
                 case 0:
                     return;
                 case 1:
-                    monthlyReports = new ArrayList<>();
-
-                    for (int i = 1; i < 4; i++) {
-                        String path = String.format(MONTHLY_REPORT_PATH_TEMPLATE, i);
-
-                        MonthlyReport monthlyReport = ReportUtils.parseTableToMonthlyReport(
-                                CSVFileReader.readCSVFileByRows(path),
-                                path
-                        );
-
-                        monthlyReports.add(monthlyReport);
-                    }
-
-                    System.out.println("Файлы месячных отчетов успешно считаны.");
+                    reportEngine.readMonthlyReports();
                     break;
                 case 2:
-                    yearlyReport = ReportUtils.parseTableToYearlyReport(
-                            CSVFileReader.readCSVFileByRows(YEARLY_REPORT_PATH), YEARLY_REPORT_PATH
-                    );
-
-                    System.out.println("Файл годового отчета успешно считан.");
+                    reportEngine.readYearlyReport();
                     break;
                 case 3:
-                    if (monthlyReports == null || yearlyReport == null) {
-                        System.out.println("Вам необходимо считать годовой и месячные отчеты перед сравнением!");
-                        break;
-                    }
-                    ReportUtils.compareReports(monthlyReports, yearlyReport);
+                    reportEngine.compareReports();
                     break;
                 case 4:
-                    if (monthlyReports == null) {
-                        System.out.println("Вам необходимо считать месячные отчеты перед получением информации о них!");
-                        break;
-                    }
-
-                    System.out.println(" Информация о месячных отчетах");
-                    System.out.println(SEPARATOR);
-
-                    monthlyReports.forEach(MonthlyReport::printInfo);
+                    reportEngine.showMonthlyReportsInfo(SEPARATOR);
                     break;
                 case 5:
-                    if (yearlyReport == null) {
-                        System.out.println("Вам необходимо считать годовой отчет перед получением информации о нем!");
-                        break;
-                    }
-
-                    System.out.println(" Информация о годовом отчете");
-                    System.out.println(SEPARATOR);
-                    yearlyReport.printInfo();
+                    reportEngine.showYearlyReportInfo(SEPARATOR);
                     break;
                 default:
                     System.out.println("Вы ввели неверную команду, попробуйте снова");

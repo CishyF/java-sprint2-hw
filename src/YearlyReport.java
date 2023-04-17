@@ -1,7 +1,7 @@
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class YearlyReport implements Report {
+public class YearlyReport {
 
     private final String year;
     private final List<MonthOperationsRecord> monthOperationsRecords;
@@ -11,11 +11,10 @@ public class YearlyReport implements Report {
         this.monthOperationsRecords = new ArrayList<>();
     }
 
-    public void addNewMonthOperation(String monthName, int amount, boolean isExpense) {
-        Objects.requireNonNull(monthName);
+    public void addNewMonthOperations(MonthOperationsRecord record) {
+        Objects.requireNonNull(record);
 
-        MonthOperationsRecord operation = new MonthOperationsRecord(monthName, amount, isExpense);
-        monthOperationsRecords.add(operation);
+        monthOperationsRecords.add(record);
     }
 
     public List<MonthOperationsRecord> getMonthOperationsRecords() {
@@ -52,20 +51,16 @@ public class YearlyReport implements Report {
         }
 
         System.out.println("- Средний расход за все месяцы в году:");
-        List<MonthOperationsRecord> onlyExpenses = monthOperationsRecords.stream()
-                                                            .filter(MonthOperationsRecord::isExpense)
+        List<Integer> onlyExpenses = monthOperationsRecords.stream()
+                                                            .map(MonthOperationsRecord::getExpenseSum)
                                                             .collect(Collectors.toList());
-        System.out.printf("\t%d\n",
-                (onlyExpenses.stream().mapToInt(MonthOperationsRecord::getExpenseSum).sum() / onlyExpenses.size())
-        );
+        System.out.printf("\t%d\n", (onlyExpenses.stream().mapToInt(i -> i).sum() / onlyExpenses.size()));
 
         System.out.println("- Средний доход за все месяцы в году:");
-        List<MonthOperationsRecord> onlyEarning = monthOperationsRecords.stream()
-                                                            .filter(o -> !o.isExpense())
-                                                            .collect(Collectors.toList());
-        System.out.printf("\t%d\n",
-                (onlyEarning.stream().mapToInt(MonthOperationsRecord::getEarningSum).sum() / onlyEarning.size())
-        );
+        List<Integer> onlyEarning = monthOperationsRecords.stream()
+                                                          .map(MonthOperationsRecord::getEarningSum)
+                                                          .collect(Collectors.toList());
+        System.out.printf("\t%d\n", (onlyEarning.stream().mapToInt(i -> i).sum() / onlyExpenses.size()));
     }
 
     @Override

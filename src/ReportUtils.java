@@ -22,15 +22,15 @@ public class ReportUtils {
 
             String itemName;
             boolean isExpense;
-            int itemQuantity, itemCost;
+            int itemQuantity, itemSumOfOne;
 
             try {
                 itemName = splitRow[0];
                 isExpense = Boolean.parseBoolean(splitRow[1]);
                 itemQuantity = Integer.parseInt(splitRow[2]);
-                itemCost = Integer.parseInt(splitRow[3]);
+                itemSumOfOne = Integer.parseInt(splitRow[3]);
 
-                monthlyReport.addNewOperation(itemName, isExpense, itemQuantity, itemCost);
+                monthlyReport.addNewOperation(itemName, isExpense, itemQuantity, itemSumOfOne);
             } catch (IndexOutOfBoundsException e) {
                 throw new RuntimeException("Неверно составлена таблица " + path + "!");
             }
@@ -49,6 +49,8 @@ public class ReportUtils {
         String yearNumber = path.split("\\.")[1];
         // Разбиваем каждую строку .csv файла по запятым
         List<String[]> parsedTable = table.stream().map(row -> row.split(",")).collect(Collectors.toList());
+        // Ассоциативный массив для кэширования объектов MonthOperationsRecord
+        Map<String, MonthOperationsRecord> operationsRecordByMonth = new HashMap<>();
 
         YearlyReport yearlyReport = new YearlyReport(yearNumber);
 
@@ -63,7 +65,16 @@ public class ReportUtils {
                 amount = Integer.parseInt(splitRow[1]);
                 isExpense = Boolean.parseBoolean(splitRow[2]);
 
-                yearlyReport.addNewMonthOperation(monthName, amount, isExpense);
+                if (operationsRecordByMonth.containsKey(monthName)) {
+
+                    operationsRecordByMonth.get(monthName).addNewSum(isExpense, amount);
+                } else {
+                    var tempRecord = new MonthOperationsRecord(monthName, amount, isExpense);
+
+                    yearlyReport.addNewMonthOperations(tempRecord);
+                    operationsRecordByMonth.put(monthName, tempRecord);
+                    System.out.println(operationsRecordByMonth);
+                }
             } catch (IndexOutOfBoundsException e) {
                 throw new RuntimeException("Неверно составлена таблица " + path + "!");
             }
@@ -72,25 +83,28 @@ public class ReportUtils {
         return yearlyReport;
     }
 
-    public static void compareReports(List<MonthlyReport> monthlyReports, YearlyReport annualReport) {
-        Iterator<MonthOperationsRecord> operationsIterator = annualReport.getMonthOperationsRecords().iterator();
+    public static void compareReports(List<MonthlyReport> monthlyReports, YearlyReport yearlyReport) {
 
-        // Данный цикл использует тип float, так как на каждый месяц приходится два
-        // объекта класса MonthOperationsRecord и только один объект MonthlyReport,
-        // соответственно, для получения нужного месяца в списке monthlyReports
-        // удобно использовать отбрасывание дробной части с помощью приведения
-        for (float monthNumber = 0; operationsIterator.hasNext(); monthNumber += 0.5) {
+        List<MonthOperationsRecord> monthsRecords = yearlyReport.getMonthOperationsRecords();
 
-            MonthOperationsRecord operation = operationsIterator.next();
+        if (monthsRecords.size() != monthlyReports.size()) {
+            System.out.println("При сверке данных отчетов обнаружено несоответсвие размеров!");
+            return;
+        }
 
-            if (operation.getAmount() != monthlyReports.get((int) monthNumber)
-                                                       .getTotalSumOfMonthOperation(operation.isExpense())
+        for (int i = 0; i < monthlyReports.size(); i++) {
+            if (
+                (monthlyReports.get(i).getTotalSumOfMonthOperation(true) !=
+                                                monthsRecords.get(i).getExpenseSum()) ||
+                (monthlyReports.get(i).getTotalSumOfMonthOperation(false) !=
+                                                    monthsRecords.get(i).getEarningSum())
             ) {
-                System.out.printf("Годовой отчет не сходится с месячными! Внимательно проверьте отчет за %s\n",
-                        operation.getMonthName());
+
+                System.out.printf("При сверке данных отчетов обнаружена ошибка за %s!\n",
+                                  monthlyReports.get(i).getMonthName()
+                );
                 return;
             }
-
         }
 
         System.out.println("Все отчеты сходятся!");

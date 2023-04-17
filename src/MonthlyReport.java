@@ -1,7 +1,7 @@
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class MonthlyReport implements Report {
+public class MonthlyReport {
 
     private final String monthName;
     private final List<OperationRecord> operations;
@@ -28,7 +28,7 @@ public class MonthlyReport implements Report {
 
     public int getTotalSumOfMonthOperation(boolean isExpense) {
         return operations.stream()
-                         .mapToInt(o -> isExpense ? o.getExpenseSum() : o.getEarningSum())
+                         .mapToInt(o -> o.isExpense() == isExpense ? o.getSum() : 0)
                          .sum();
     }
 
@@ -40,7 +40,8 @@ public class MonthlyReport implements Report {
 
         OperationRecord mostProfitableItem =
                 operations.stream()
-                          .sorted(Comparator.comparingInt(OperationRecord::getEarningSum))
+                          .filter(o -> !o.isExpense())
+                          .sorted(Comparator.comparingInt(OperationRecord::getSum))
                           .collect(Collectors.toCollection(LinkedList::new))
                           .pollLast();
 
@@ -48,7 +49,7 @@ public class MonthlyReport implements Report {
         System.out.printf("- Самый прибыльный товар за %s - это %s, доход от него составил %d\n",
                           monthName,
                           mostProfitableItem.getName(),
-                          mostProfitableItem.getEarningSum()
+                          mostProfitableItem.getSum()
         );
     }
 
@@ -60,13 +61,14 @@ public class MonthlyReport implements Report {
 
         OperationRecord mostExpensiveWaste =
                 operations.stream()
-                          .sorted(Comparator.comparingInt(OperationRecord::getExpenseSum))
+                          .filter(OperationRecord::isExpense)
+                          .sorted(Comparator.comparingInt(OperationRecord::getSum))
                           .collect(Collectors.toCollection(LinkedList::new))
                           .pollLast();
 
         System.out.printf("- Самая большая трата за %s, которая составила %d, - это %s\n",
                 monthName,
-                mostExpensiveWaste.getExpenseSum(),
+                mostExpensiveWaste.getSum(),
                 mostExpensiveWaste.getName()
         );
     }

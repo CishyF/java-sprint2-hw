@@ -1,52 +1,42 @@
-public class OperationRecord implements Record {
+public class OperationRecord {
 
     private final String name;
-    private final int cost;
+    private final int sumOfOne;
     private final int quantity;
     private final boolean isExpense;
-    private int expenseSum;
-    private int earningSum;
 
-    public OperationRecord(String name, boolean isExpense, int quantity, int cost) {
+    public OperationRecord(String name, boolean isExpense, int quantity, int sumOfOne) {
         this.name = name;
         this.isExpense = isExpense;
         this.quantity = quantity;
-        this.cost = cost;
-        if (isExpense)
-            expenseSum = quantity * cost;
-        else
-            earningSum = quantity * cost;
+        this.sumOfOne = sumOfOne;
     }
 
     public String getName() {
         return name;
     }
 
-    public int getCost() {
-        return cost;
+    public int getSumOfOne() {
+        return sumOfOne;
     }
 
     public int getQuantity() {
         return quantity;
     }
 
+    public int getSum() {
+        return sumOfOne * quantity;
+    }
+
     public boolean isExpense() {
         return isExpense;
-    }
-
-    public int getExpenseSum() {
-        return expenseSum;
-    }
-
-    public int getEarningSum() {
-        return earningSum;
     }
 
     @Override
     public String toString() {
         return "OperationRecord{" +
                 "name='" + name + '\'' +
-                ", cost=" + cost +
+                ", sumOfOne=" + sumOfOne +
                 ", quantity=" + quantity +
                 ", isExpense=" + isExpense +
                 '}';
